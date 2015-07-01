@@ -371,11 +371,12 @@
         isVisible = spinnerComputedStyles.visibility === 'visible';
 
         if (isVisible) {
-          console.log('visible');
+          // console.log('spinner visible');
           ionic.requestAnimationFrame(run);
-        } else {
-          console.log('not visible');
         }
+        // else {
+        // console.log('spinner not visible');
+        //}
       }
 
       return function() {
