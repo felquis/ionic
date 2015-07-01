@@ -21,8 +21,17 @@
 .opacity-show {
   opacity: 1;
 }
+
 .invisible {
   visibility: hidden;
+}
+
+.invisible ion-spinner {
+  visibility: hidden;
+}
+
+.active ion-spinner {
+  visibility: visible;
 }
 
 .keyboard-open .hide-on-keyboard-open {

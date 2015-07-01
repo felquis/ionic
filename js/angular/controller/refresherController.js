@@ -160,6 +160,7 @@ IonicModule
         ionic.requestAnimationFrame(function() {
           scrollChild.classList.add('overscroll');
           show();
+          console.log('setScrollLock - show')
         });
 
       } else {
@@ -167,6 +168,7 @@ IonicModule
           scrollChild.classList.remove('overscroll');
           hide();
           deactivate();
+          console.log('setScrollLock - hide')
         });
       }
     }
@@ -251,6 +253,8 @@ IonicModule
       ionic.on('touchend', handleTouchend, scrollChild);
       ionic.on('scroll', handleScroll, scrollParent);
 
+      console.log('init: ', $element[0].classList)
+
       // cleanup when done
       $scope.$on('$destroy', destroy);
     };
@@ -278,32 +282,45 @@ IonicModule
 
     function activate() {
       $element[0].classList.add('active');
+
+      console.log('Active: ', $element[0].classList)
+
+      $scope.$broadcast('spinner.start');
       $scope.$onPulling();
     }
 
     function deactivate() {
       // give tail 150ms to finish
+
+      // console.log('deactivate BEFORE: ', $element[0].classList)
       $timeout(function() {
         // deactivateCallback
         $element.removeClass('active refreshing refreshing-tail');
+        console.log('deactivate AFTER: ', $element[0].classList)
         if (activated) activated = false;
       }, 150);
     }
 
     function start() {
       // startCallback
+      // console.log('start BEFORE: ', $element[0].classList)
       $element[0].classList.add('refreshing');
+      console.log('start AFTER', $element[0].classList)
       $scope.$onRefresh();
     }
 
     function show() {
       // showCallback
+      // console.log('show BEFORE: ', $element[0].classList)
       $element[0].classList.remove('invisible');
+      // console.log('show AFTER', $element[0].classList)
     }
 
     function hide() {
       // showCallback
+      // console.log('hide BEFORE: ', $element[0].classList)
       $element[0].classList.add('invisible');
+      console.log('hide AFTER: ', $element[0].classList)
     }
 
     function tail() {

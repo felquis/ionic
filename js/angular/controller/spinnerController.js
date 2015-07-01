@@ -335,6 +335,7 @@
       var startTime;
       var svgEle = ele.querySelector('g');
       var circleEle = ele.querySelector('circle');
+      var spinnerComputedStyles = null;
 
       function run() {
         var v = easeInOutCubic(Date.now() - startTime, 650);
@@ -366,7 +367,16 @@
           startTime = Date.now();
         }
 
-        ionic.requestAnimationFrame(run);
+        spinnerComputedStyles = window.getComputedStyle(ele)
+        isVisible = spinnerComputedStyles.visibility === 'visible';
+
+        if (isVisible) {
+          // console.log('spinner visible');
+          ionic.requestAnimationFrame(run);
+        }
+        // else {
+        //   console.log('spinner not visible');
+        // }
       }
 
       return function() {
@@ -380,21 +390,29 @@
 
   function easeInOutCubic(t, c) {
     t /= c / 2;
-    if (t < 1) return 1 / 2 * t * t * t;
+
+    if (t < 1) {
+      return 1 / 2 * t * t * t;
+    }
+
     t -= 2;
+
     return 1 / 2 * (t * t * t + 2);
   }
 
 
   IonicModule
   .controller('$ionicSpinner', [
+    '$scope',
+    '$state',
     '$element',
     '$attrs',
     '$ionicConfig',
-  function($element, $attrs, $ionicConfig) {
-    var spinnerName;
+  function($scope, $state, $element, $attrs, $ionicConfig) {
 
-    this.init = function() {
+    var ctrl = this;
+
+    ctrl.init = function() {
       spinnerName = $attrs.icon || $ionicConfig.spinner.icon();
 
       var container = document.createElement('div');
@@ -409,15 +427,36 @@
       // building up the svg element and appending it.
       $element.html(container.innerHTML);
 
-      this.start();
+      // Start the spinner
+      ctrl.start();
 
       return spinnerName;
     };
 
-    this.start = function() {
+    ctrl.getStateHref = function(state, params) {
+      return $state.href(state || $state.current, params || $state.params);
+    }
+
+    // Infinite-Scroll and others directives can "play" the spinner
+    // The spinner will be paused if it's not visible
+    $scope.$on('spinner.start', ctrl.start);
+
+    ctrl.start = function() {
+      // It's necessary to specify that the spinner
+      // is active before playing it
+      $element[0].classList.add('active');
+      $element[0].classList.remove('invisible');
+
       animations[spinnerName] && animations[spinnerName]($element[0])();
     };
 
+    ctrl.stop = function() {
+      // The spinner will check if the visibility is visible
+      // If it's hidden, it wont execute the next frame
+      // And will pause
+      $element[0].classList.remove('active');
+      $element[0].classList.add('invisible');
+    };
   }]);
 
 })(ionic);

@@ -47443,7 +47443,9 @@ function($scope, $attrs, $element, $timeout) {
   function onInfinite() {
     ionic.requestAnimationFrame(function() {
       $element[0].classList.add('active');
+      $scope.$broadcast('spinner.start');
     });
+
     self.isLoading = true;
     $scope.$parent && $scope.$parent.$apply($attrs.onInfinite || '');
   }
@@ -47451,6 +47453,7 @@ function($scope, $attrs, $element, $timeout) {
   function finishInfiniteScroll() {
     ionic.requestAnimationFrame(function() {
       $element[0].classList.remove('active');
+      $scope.$broadcast('spinner.stop');
     });
     $timeout(function() {
       if (self.jsScrolling) self.scrollView.resize();
@@ -49665,6 +49668,8 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
     dur: DURATION
   };
 
+  var isRunning = true;
+
   function createSvgElement(tagName, data, parent, spinnerName) {
     var ele = document.createElement(SHORTCUTS[tagName] || tagName);
     var k, x, y;
@@ -49972,12 +49977,19 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
       var svgEle = ele.querySelector('g');
       var circleEle = ele.querySelector('circle');
 
+      var v;
+      var scaleX;
+      var translateX;
+      var dasharray;
+      var dashoffset;
+      var rotateLine;
+
       function run() {
-        var v = easeInOutCubic(Date.now() - startTime, 650);
-        var scaleX = 1;
-        var translateX = 0;
-        var dasharray = (188 - (58 * v));
-        var dashoffset = (182 - (182 * v));
+        v = easeInOutCubic(Date.now() - startTime, 650);
+        scaleX = 1;
+        translateX = 0;
+        dasharray = (188 - (58 * v));
+        dashoffset = (182 - (182 * v));
 
         if (rIndex % 2) {
           scaleX = -1;
@@ -49986,7 +49998,7 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
           dashoffset = (182 * v);
         }
 
-        var rotateLine = [0, -101, -90, -11, -180, 79, -270, -191][rIndex];
+        rotateLine = [0, -101, -90, -11, -180, 79, -270, -191][rIndex];
 
         setSvgAttribute(circleEle, 'da', Math.max(Math.min(dasharray, 188), 128));
         setSvgAttribute(circleEle, 'os', Math.max(Math.min(dashoffset, 182), 0));
@@ -50002,11 +50014,14 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
           startTime = Date.now();
         }
 
-        ionic.requestAnimationFrame(run);
+        if (isRunning) {
+          ionic.requestAnimationFrame(run);
+        }
       }
 
       return function() {
         startTime = Date.now();
+        isRunning = true;
         run();
       };
 
@@ -50024,10 +50039,11 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
 
   IonicModule
   .controller('$ionicSpinner', [
+    '$scope',
     '$element',
     '$attrs',
     '$ionicConfig',
-  function($element, $attrs, $ionicConfig) {
+  function($scope, $element, $attrs, $ionicConfig) {
     var spinnerName;
 
     this.init = function() {
@@ -50045,14 +50061,26 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
       // building up the svg element and appending it.
       $element.html(container.innerHTML);
 
-      this.start();
+      start();
 
       return spinnerName;
     };
 
-    this.start = function() {
+    function start() {
       animations[spinnerName] && animations[spinnerName]($element[0])();
     };
+
+    function stop() {
+      isRunning = false;
+    };
+
+    $scope.$on('spinner.start', function() {
+      start();
+    });
+
+    $scope.$on('spinner.stop', function() {
+      stop();
+    });
 
   }]);
 
