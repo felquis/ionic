@@ -371,7 +371,10 @@
         isVisible = spinnerComputedStyles.visibility === 'visible';
 
         if (isVisible) {
+          console.log('visible');
           ionic.requestAnimationFrame(run);
+        } else {
+          console.log('not visible');
         }
       }
 
@@ -400,11 +403,13 @@
   IonicModule
   .controller('$ionicSpinner', [
     '$scope',
+    '$state',
     '$element',
     '$attrs',
     '$ionicConfig',
-  function($scope, $element, $attrs, $ionicConfig) {
+  function($scope, $state, $element, $attrs, $ionicConfig) {
     var spinnerName;
+    var currentState;
 
     this.init = function() {
       spinnerName = $attrs.icon || $ionicConfig.spinner.icon();
@@ -421,16 +426,46 @@
       // building up the svg element and appending it.
       $element.html(container.innerHTML);
 
+      // Save the spinner's view
+      currentState = $state.current;
+
+      // Start the party
       start();
 
       return spinnerName;
     };
 
+    // Infinite-Scroll and others directives can "play" the spinner
+    // The spinner will be paused if it's not visible
+    $scope.$on('spinner.start', start);
+
+    $scope.$on('$stateChangeSuccess', function (event, toState) {
+      if (currentState.url === toState.url) {
+        // Run the spinner if the spinner is in the current state
+        start();
+      } else {
+        // If the current view is different of the spinner's view,
+        // pause the spinner
+        stop();
+      }
+    });
+
     function start() {
+      // It's necessary to specify that the spinner
+      // is active before playing it
+      $element[0].classList.add('active');
+      $element[0].classList.remove('invisible');
+
       animations[spinnerName] && animations[spinnerName]($element[0])();
     };
 
-    $scope.$on('spinner.start', start);
+    function stop() {
+      // The spinner will check if the visibility is visible
+      // If it's hidden, it wont execute the next frame
+      // And will pause
+      $element[0].classList.remove('active');
+      $element[0].classList.add('invisible');
+    };
   }]);
 
 })(ionic);
