@@ -29,8 +29,6 @@
     dur: DURATION
   };
 
-  var isRunning = true;
-
   function createSvgElement(tagName, data, parent, spinnerName) {
     var ele = document.createElement(SHORTCUTS[tagName] || tagName);
     var k, x, y;
@@ -337,20 +335,14 @@
       var startTime;
       var svgEle = ele.querySelector('g');
       var circleEle = ele.querySelector('circle');
-
-      var v;
-      var scaleX;
-      var translateX;
-      var dasharray;
-      var dashoffset;
-      var rotateLine;
+      var spinnerComputedStyles = null;
 
       function run() {
-        v = easeInOutCubic(Date.now() - startTime, 650);
-        scaleX = 1;
-        translateX = 0;
-        dasharray = (188 - (58 * v));
-        dashoffset = (182 - (182 * v));
+        var v = easeInOutCubic(Date.now() - startTime, 650);
+        var scaleX = 1;
+        var translateX = 0;
+        var dasharray = (188 - (58 * v));
+        var dashoffset = (182 - (182 * v));
 
         if (rIndex % 2) {
           scaleX = -1;
@@ -359,7 +351,7 @@
           dashoffset = (182 * v);
         }
 
-        rotateLine = [0, -101, -90, -11, -180, 79, -270, -191][rIndex];
+        var rotateLine = [0, -101, -90, -11, -180, 79, -270, -191][rIndex];
 
         setSvgAttribute(circleEle, 'da', Math.max(Math.min(dasharray, 188), 128));
         setSvgAttribute(circleEle, 'os', Math.max(Math.min(dashoffset, 182), 0));
@@ -375,14 +367,16 @@
           startTime = Date.now();
         }
 
-        if (isRunning) {
+        spinnerComputedStyles = window.getComputedStyle(ele)
+        isVisible = spinnerComputedStyles.visibility === 'visible';
+
+        if (isVisible) {
           ionic.requestAnimationFrame(run);
         }
       }
 
       return function() {
         startTime = Date.now();
-        isRunning = true;
         run();
       };
 
@@ -392,8 +386,13 @@
 
   function easeInOutCubic(t, c) {
     t /= c / 2;
-    if (t < 1) return 1 / 2 * t * t * t;
+
+    if (t < 1) {
+      return 1 / 2 * t * t * t;
+    }
+
     t -= 2;
+
     return 1 / 2 * (t * t * t + 2);
   }
 
@@ -431,18 +430,7 @@
       animations[spinnerName] && animations[spinnerName]($element[0])();
     };
 
-    function stop() {
-      isRunning = false;
-    };
-
-    $scope.$on('spinner.start', function() {
-      start();
-    });
-
-    $scope.$on('spinner.stop', function() {
-      stop();
-    });
-
+    $scope.$on('spinner.start', start);
   }]);
 
 })(ionic);
