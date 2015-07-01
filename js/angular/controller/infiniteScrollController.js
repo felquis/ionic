@@ -33,7 +33,9 @@ function($scope, $attrs, $element, $timeout) {
   function onInfinite() {
     ionic.requestAnimationFrame(function() {
       $element[0].classList.add('active');
+      $scope.$broadcast('spinner.start');
     });
+
     self.isLoading = true;
     $scope.$parent && $scope.$parent.$apply($attrs.onInfinite || '');
   }
@@ -41,6 +43,7 @@ function($scope, $attrs, $element, $timeout) {
   function finishInfiniteScroll() {
     ionic.requestAnimationFrame(function() {
       $element[0].classList.remove('active');
+      $scope.$broadcast('spinner.stop');
     });
     $timeout(function() {
       if (self.jsScrolling) self.scrollView.resize();
