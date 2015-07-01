@@ -187,7 +187,21 @@ IonicModule
     controller: '$ionicSpinner',
     link: function($scope, $element, $attrs, ctrl) {
       var spinnerName = ctrl.init();
+      var currentStateHref = ctrl.getStateHref();
+
       $element.addClass('spinner spinner-' + spinnerName);
+
+      $scope.$on('$stateChangeSuccess', function (event, toState, toParams) {
+
+        if (currentStateHref === ctrl.getStateHref(toState, toParams)) {
+          // Run the spinner if the spinner is in the current state
+          ctrl.start();
+        } else {
+          // If the current view is different of the spinner's view,
+          // pause the spinner
+          ctrl.stop();
+        }
+      });
     }
   };
 });
